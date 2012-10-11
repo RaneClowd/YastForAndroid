@@ -65,12 +65,10 @@ public class YastServiceProvider {
 			   	rd.close();
 			   
 			   	String results = builder.toString();
-		        XmlPullParser parser = Xml.newPullParser();
-	            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-	            parser.setInput(new StringReader(results));
-	            parser.nextTag();
-	            
-	            Dictionary<String, Object> parsedResponse = readResponse(parser);
+			   	
+			   	results = "<company><division><employee>Bob</employee><employee>George</employee><employee>Tom</employee></division><division><employee>Leslie</employee><employee>Tiffany</employee><employee>Sam</employee></division></company>";
+			   	
+		        XMLParser.parseXML(results);
 	            
 	            return null;
 		        //return readResponse(parser);
@@ -83,37 +81,6 @@ public class YastServiceProvider {
 		@Override
 		protected void onPostExecute(YastResponse result) {
 	        this.callback.execute("status: " + result.status + ", hash: " + result.hash);
-		}
-
-		private Dictionary<String, Object> readResponse(XmlPullParser parser) throws XmlPullParserException, IOException {
-		    Hashtable<String, Object> response = new Hashtable<String, Object>();
-		    parser.require(XmlPullParser.START_TAG, "", "response");
-			
-			for (int i=0; i<parser.getAttributeCount(); i++) {
-		    	response.put(parser.getAttributeName(i), parser.getAttributeValue(i));
-		    }
-			
-		    while (parser.next() != XmlPullParser.END_TAG) {
-		        if (parser.getEventType() != XmlPullParser.START_TAG) {
-		            continue;
-		        }
-		        
-		        response.put(parser.getName(), readNode(parser));
-		    }
-		    return response;
-		}
-		
-		private Object readNode(XmlPullParser parser) throws IOException, XmlPullParserException {
-			return readText(parser);
-		}
-		
-		private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
-		    String result = null;
-		    if (parser.next() == XmlPullParser.TEXT) {
-		        result = parser.getText();
-		        parser.nextTag();
-		    }
-		    return result;
 		}
 	}
 }

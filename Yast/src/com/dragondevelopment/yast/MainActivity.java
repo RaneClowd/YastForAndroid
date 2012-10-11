@@ -32,13 +32,16 @@ public class MainActivity extends Activity {
 				
 				resultsTextview.setText("signing in...");
 				
-				YastServiceProvider.getInstance().logIn(username, password, new Callback() {
+				String results = "<company><division>one</division><division>two</division></company>";
+				XMLParser.parseXML(results);
+				
+				/*YastServiceProvider.getInstance().logIn(username, password, new Callback() {
 					
 					@Override
 					public void execute(Object data) {
 						resultsTextview.setText((String)data);
 					}
-				});
+				});*/
 			}
 		});
     }
