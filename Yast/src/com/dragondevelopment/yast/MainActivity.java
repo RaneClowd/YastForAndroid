@@ -1,11 +1,12 @@
 package com.dragondevelopment.yast;
 
+import com.yast.android.yastlib.Callback;
 import com.yast.android.yastlib.Yast;
-import com.yast.android.yastlib.exceptions.YastLibApiException;
-import com.yast.android.yastlib.exceptions.YastLibBadResponseException;
+import com.yast.android.yastlib.YastResponse;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,15 +35,18 @@ public class MainActivity extends Activity {
 				
 				resultsTextview.setText("signing in...");
 				
-				Yast yastProvider = Yast.get();
-				try {
-					yastProvider.login(username, password);
-					resultsTextview.setText(yastProvider.hashCode());
-				} catch (YastLibBadResponseException e) {
-					resultsTextview.setText("error: bad response");
-				} catch (YastLibApiException e) {
-					resultsTextview.setText("error: status of response " + e.getStatus());
-				}
+				final Yast yastProvider = Yast.get();
+				yastProvider.login(username, password, new Callback() {
+					@Override
+					public void execute(String error, YastResponse response) {
+						if (error != null) {
+							resultsTextview.setText(error);
+						} else {
+							Intent intent = new Intent(MainActivity.this, ProjectViewActivity.class);
+							startActivity(intent);
+						}
+					}
+				});
 			}
 		});
     }

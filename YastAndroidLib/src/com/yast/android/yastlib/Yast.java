@@ -22,15 +22,14 @@ import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
-import com.yast.android.yastlib.exceptions.YastLibApiException;
 import com.yast.android.yastlib.exceptions.YastLibBadRequestException;
 import com.yast.android.yastlib.exceptions.YastLibBadResponseException;
 import com.yast.android.yastlib.exceptions.YastLibNotLoggedInException;
 
 public class Yast {
-	private static final String apiUrl = "http://www.yast.com/1.0/";
+	private static final String apiUrl = "https://www.yast.com/1.0/";
 	//private static final String apiUrl = "http://fjas.com/1.0/";
-	private static final int requestTimeout = 600;
+	//private static final int requestTimeout = 600;
 
 	private String username;
 	private String hash;
@@ -70,31 +69,38 @@ public class Yast {
 	 * 
 	 */
 
-	public void login(final String username, final String password) throws YastLibBadResponseException, YastLibApiException{
+	public void login(final String username, final String password, final Callback callback) {
 		YastResponseLogin resp = new YastResponseLogin();
 
-		request(new YastRequestLogin(username, password), resp);
-
-		this.username = username;
-		this.hash = resp.getHash();
+		request(new YastRequestLogin(username, password), resp, new Callback() {
+			@Override
+			public void execute(String error, YastResponse response) {
+				YastResponseLogin loginResp = (YastResponseLogin)response;
+				
+				Yast.this.username = username;
+				Yast.this.hash = loginResp.getHash();
+				
+				callback.execute(error, response);
+			}
+		});
 	}
 
-	public YastUserInfo getUserInfo() throws YastLibBadResponseException, YastLibApiException {
+	public YastUserInfo getUserInfo(Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		YastResponseUserInfo resp = new YastResponseUserInfo();
-		request(new YastRequestUserInfo(username, hash), resp);
+		request(new YastRequestUserInfo(username, hash), resp, callback);
 
 		return resp.getUserInfo();
 	}
 
-	public void add(final YastDataObject object) throws YastLibBadResponseException, YastLibApiException {
+	public void add(final YastDataObject object, Callback callback) {
 		ArrayList<YastDataObject> list = new ArrayList<YastDataObject>();
 		list.add(object);
-		add(list);
+		add(list, callback);
 	}
 
-	public void add(final ArrayList<? extends YastDataObject> objects) throws YastLibBadResponseException, YastLibApiException {
+	public void add(final ArrayList<? extends YastDataObject> objects, Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		// Check that objects really should be added, not just changed. This is done by checking they have a id (should be assigned by Yast.com)
@@ -116,7 +122,7 @@ public class Yast {
 		}
 
 		YastResponseUpdatedObjects resp = new YastResponseUpdatedObjects();
-		request(new YastRequestAdd(username, hash, objects), resp);
+		request(new YastRequestAdd(username, hash, objects), resp, callback);
 
 
 		ArrayList<YastDataObject> updatedObjects = resp.getObjects();
@@ -131,13 +137,13 @@ public class Yast {
 		}
 	}
 
-	public void change(final YastDataObject object) throws YastLibBadResponseException, YastLibApiException {
+	public void change(final YastDataObject object, Callback callback) {
 		ArrayList<YastDataObject> list = new ArrayList<YastDataObject>();
 		list.add(object);
-		change(list);
+		change(list, callback);
 	}
 
-	public void change(final ArrayList<? extends YastDataObject> objects) throws YastLibBadResponseException, YastLibApiException {
+	public void change(final ArrayList<? extends YastDataObject> objects, Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		// Check that objects really should be added, not just changed. This is done by checking they have a id (should be assigned by Yast.com)
@@ -159,7 +165,7 @@ public class Yast {
 		}
 
 		YastResponseUpdatedObjects resp = new YastResponseUpdatedObjects();
-		request(new YastRequestChange(username, hash, objects), resp);
+		request(new YastRequestChange(username, hash, objects), resp, callback);
 
 		ArrayList<YastDataObject> updatedObjects = resp.getObjects();
 
@@ -173,10 +179,10 @@ public class Yast {
 		}
 	}
 
-	public void delete(final YastDataObject object) throws YastLibBadResponseException, YastLibApiException {
+	public void delete(final YastDataObject object, Callback callback) {
 		ArrayList<YastDataObject> list = new ArrayList<YastDataObject>();
 		list.add(object);
-		delete(list);
+		delete(list, callback);
 	}
 
 	/*
@@ -186,7 +192,7 @@ public class Yast {
 	 * @return true if deleted false otherwise
 	 * 
 	 */
-	public void delete(final ArrayList<? extends YastDataObject> objects) throws YastLibBadResponseException, YastLibApiException {
+	public void delete(final ArrayList<? extends YastDataObject> objects, Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		// Check that all objects has an id (or else it will be impossible to delete them
@@ -206,44 +212,49 @@ public class Yast {
 		}
 
 		YastResponseDelete resp = new YastResponseDelete();
-		request(new YastRequestDelete(username, hash, objects), resp);
+		request(new YastRequestDelete(username, hash, objects), resp, callback);
 	}
 
-	public ArrayList<YastProject> getProjects() throws YastLibBadResponseException, YastLibApiException{
+	public ArrayList<YastProject> getProjects(Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		YastResponseProjects resp = new YastResponseProjects();
-		request(new YastRequestProjects(username, hash), resp);
+		request(new YastRequestProjects(username, hash), resp, callback);
 
 		return resp.getProjects();
 	}
 
-	public ArrayList<YastFolder> getFolders() throws YastLibBadResponseException, YastLibApiException{
+	public ArrayList<YastFolder> getFolders(Callback callback) {
 		if (!hasCredentials()){ throw new YastLibNotLoggedInException(); };
 
 		YastResponseFolders resp = new YastResponseFolders();
-		request(new YastRequestFolders(username, hash), resp);
+		request(new YastRequestFolders(username, hash), resp, callback);
 
 		return resp.getFolders();
 	}
 
-	public ArrayList<YastRecord> getRecords(final int timeFrom) throws YastLibBadResponseException, YastLibApiException{ return getRecords(null, null, null, timeFrom, 0);}
-	public ArrayList<YastRecord> getRecords(final int timeFrom, final int timeTo) throws YastLibBadResponseException, YastLibApiException{ return getRecords(null, null, null, timeFrom, timeTo);}
-	public ArrayList<YastRecord> getRecords(final ArrayList<Integer> typeIds, final ArrayList<Integer> ids, final ArrayList<Integer> parentIds, final int timeFrom, final int timeTo) throws YastLibBadResponseException, YastLibApiException{
+	public ArrayList<YastRecord> getRecords(final int timeFrom, Callback callback) { return getRecords(null, null, null, timeFrom, 0, callback);}
+	public ArrayList<YastRecord> getRecords(final int timeFrom, final int timeTo, Callback callback) { return getRecords(null, null, null, timeFrom, timeTo, callback);}
+	public ArrayList<YastRecord> getRecords(final ArrayList<Integer> typeIds, final ArrayList<Integer> ids, final ArrayList<Integer> parentIds, final int timeFrom, final int timeTo, Callback callback) {
 		YastResponseRecords resp = new YastResponseRecords();
-		request(new YastRequestRecords(username, hash, typeIds, ids, parentIds, timeFrom, timeTo), resp);
+		request(new YastRequestRecords(username, hash, typeIds, ids, parentIds, timeFrom, timeTo), resp, callback);
 
 		return resp.getRecords();
 	}
 
-	private void request(final YastRequest req, final YastResponse resp) throws YastLibBadResponseException, YastLibApiException{
-		
+	private void request(final YastRequest req, final YastResponse resp, Callback callback) {
+		Request requester = new Request();
+		requester.callback = callback;
+		requester.execute(req, resp);
 	}
 	
-	private class Request extends AsyncTask<Object, Void, Void>
+	private class Request extends AsyncTask<Object, Void, YastResponse>
 	{
+		public Callback callback;
+		private String error;
+		
 		@Override
-		protected Void doInBackground(Object... params) {
+		protected YastResponse doInBackground(Object... params) {
 			YastRequest req = (YastRequest)params[0];
 			YastResponse resp = (YastResponse)params[1];
 			
@@ -282,24 +293,29 @@ public class Yast {
 						if (status == 0){
 							resp.processResponse(responseElement);
 						} else {
-							params[2] = new YastLibApiException(status);
+							this.error = "error: status of response " + status;
 						}
 					} else {
-						params[2] = new YastLibBadResponseException();
+						this.error = "error: bad response";
 					}
 				}
 			} catch (ClientProtocolException e) {
-				params[2] = new YastLibBadResponseException("Failed to get response (ClientProtocolException), check cause for details", e);
+				this.error = "Failed to get response (ClientProtocolException), check cause for details";
 			} catch (IOException e) {
-				params[2] = new YastLibBadResponseException("Failed to get response (IOException), check cause for details", e);
+				this.error = "Failed to get response (IOException), check cause for details";
 			} catch (ParserConfigurationException e) {
-				params[2] = new YastLibBadResponseException("Failed to parse API response (ParserConfigurationException), check cause for details", e);
+				this.error = "Failed to parse API response (ParserConfigurationException), check cause for details";
 			} catch (SAXException e) {
-				params[2] = new YastLibBadResponseException("Failed to parse API response (SAXException), check cause for details", e);
+				this.error = "Failed to parse API response (SAXException), check cause for details";
 			} catch (YastLibBadResponseException e) {
-				params[2] = e;
+				this.error = "error: bad response";
 			}
-			return null;
+			return resp;
+		}
+
+		@Override
+		protected void onPostExecute(YastResponse result) {
+			this.callback.execute(this.error, result);
 		}
 	}
 

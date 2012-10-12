@@ -4,7 +4,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import android.content.ContentValues;
-import android.database.Cursor;
 
 public abstract class YastAbstractProject extends YastDataObject{
 	protected String name;
