@@ -1,6 +1,8 @@
 package com.dragondevelopment.yast;
 
-import com.yast.android.*;
+import com.yast.android.yastlib.Yast;
+import com.yast.android.yastlib.exceptions.YastLibApiException;
+import com.yast.android.yastlib.exceptions.YastLibBadResponseException;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -32,16 +34,15 @@ public class MainActivity extends Activity {
 				
 				resultsTextview.setText("signing in...");
 				
-				String results = "<company><division>one</division><division>two</division></company>";
-				XMLParser.parseXML(results);
-				
-				/*YastServiceProvider.getInstance().logIn(username, password, new Callback() {
-					
-					@Override
-					public void execute(Object data) {
-						resultsTextview.setText((String)data);
-					}
-				});*/
+				Yast yastProvider = Yast.get();
+				try {
+					yastProvider.login(username, password);
+					resultsTextview.setText(yastProvider.hashCode());
+				} catch (YastLibBadResponseException e) {
+					resultsTextview.setText("error: bad response");
+				} catch (YastLibApiException e) {
+					resultsTextview.setText("error: status of response " + e.getStatus());
+				}
 			}
 		});
     }
