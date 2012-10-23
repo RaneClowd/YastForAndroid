@@ -9,5 +9,6 @@
     <string name="username_hint">Username</string>
     <string name="username">testuser</string>
     <string name="password">testpass</string>
+    <string name="comment_hint">comment for ending project</string>
 
 </resources>
